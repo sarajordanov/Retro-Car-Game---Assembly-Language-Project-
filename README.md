@@ -15,7 +15,7 @@ What This Project Demonstrates is:
   - Frame-based difficulty scaling
 
 
-How does the Retro Car Game work?
+How does the Retro Car Game work? <br>
 The player controls a car that can move left and right using the keyboard:
 
 - 4 → Move left
@@ -31,7 +31,9 @@ The objective is to avoid obstacles and stay on the road. The game ends if:
 - The car moves off the road (pavement collision)
 
 As the game progresses, the obstacle speed increases, making it more challenging over time.
-
+<br>
+<br>
+<br>
 
 
 
