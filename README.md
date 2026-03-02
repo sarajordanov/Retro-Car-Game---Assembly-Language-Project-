@@ -32,7 +32,10 @@ The objective is to avoid obstacles and stay on the road. The game ends if:
 As the game progresses, the obstacle speed increases, making it more challenging over time.
 
 
+
+
 Technical Highlights
+
 **Interrupt Service Routine (ISR)**
 The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and update the screen smoothly, creating stable animation and responsive controls.
 
