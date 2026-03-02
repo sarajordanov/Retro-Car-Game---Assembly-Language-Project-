@@ -37,34 +37,32 @@ As the game progresses, the obstacle speed increases, making it more challenging
 <br>
 <br>
 
+**Technical Highlights**
+- **Interrupt Service Routine (ISR)** <br>
+  The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and         update the screen smoothly, creating stable animation and responsive controls.
 
-Technical Highlights
+- **Custom Graphics (VRAM Tiles)** <br>
+  Instead of using built-in characters, I created custom 64×64 pixel graphics and loaded them directly into video memory (VRAM). These custom tiles are used to      build the car, obstacles, and road elements.
 
-- **Interrupt Service Routine (ISR)**<br>
-The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and update the screen smoothly, creating stable animation and responsive controls.
+- **Sprite System** <br>
+  The car is built from three separate sprites:<br>
+  Outline <br>
+  Lights <br>
+  Body <br>
 
-- **Custom Graphics (VRAM Tiles)**<br>
-Instead of using built-in characters, I created custom 64×64 pixel graphics and loaded them directly into video memory (VRAM). These custom tiles are used to build the car, obstacles, and road elements.
+  Each obstacle is also a separate sprite with its own position and movement behavior.
 
-- **Sprite System**<br>
-The car is built from three separate sprites:<br>
-Outline <br>
-Lights <br>
-Body <br>
+- **Collision Detection** <br>
+  The game constantly checks the distance between the car and obstacles. If they get too close, the game detects a collision and triggers a game-over screen.
 
-Each obstacle is also a separate sprite with its own position and movement behavior.
-
-- **Collision Detection**
-The game constantly checks the distance between the car and obstacles. If they get too close, the game detects a collision and triggers a game-over screen.
-
-- **Increasing Difficulty Over Time**
+- **Increasing Difficulty Over Time**<br>
   The game tracks how many frames have passed. After a certain amount of time, the obstacles move faster. This gradually makes the game more challenging, up to a    maximum speed.
 
-This project allowed me to apply core Systems 1 concepts in a practical and meaningful way. 
+This project allowed me to apply core Systems 1 concepts in a practical and meaningful way. <br>
 I worked with stack initialization and register preservation inside interrupt service routines, managed interrupt control using CLI/STI, and used bitwise operations such as SHR, SHL, AND, and OR to manipulate packed position values. 
-
+<br>
 I also communicated directly with hardware through memory-mapped I/O and IN/OUT instructions, while manually managing memory and VRAM without any abstractions.
-
+<br>
 Through building this game entirely in assembly, I gained a deep understanding of how graphics are constructed from raw memory, how hardware interrupts function internally, how a game loop operates at the lowest level, and how timing and synchronization affect smooth animation. 
 
 
