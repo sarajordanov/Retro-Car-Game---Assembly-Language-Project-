@@ -2,8 +2,8 @@
 
 This project was developed as part of my Systems 1 course in the first year of Computer Science. The goal of the course was to understand computer architecture, low-level programming, interrupts, memory-mapped I/O, and how hardware interacts with software.
 
-For this project, I built a small retro-style car game entirely in assembly language. <br>
-
+For this project, I built a small retro-style car game entirely in assembly language. 
+<br>
 What This Project Demonstrates is:
   - low-level programming in assembly
   - Interrupt handling (keyboard + VSync)
