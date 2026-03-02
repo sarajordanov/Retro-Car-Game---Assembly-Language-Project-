@@ -46,9 +46,9 @@ As the game progresses, the obstacle speed increases, making it more challenging
 
 - **Sprite System** <br>
   The car is built from three separate sprites:<br>
-  Outline <br>
-  Lights <br>
-  Body <br>
+  * Outline <br>
+  * Lights <br>
+  * Body <br>
 
   Each obstacle is also a separate sprite with its own position and movement behavior.
 
