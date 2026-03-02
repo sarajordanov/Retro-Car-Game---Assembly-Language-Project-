@@ -6,7 +6,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
 <br>
 <br>
 <br>
-What This Project Demonstrates is: 
+<h3>What This Project Demonstrates is: </h3> 
   - low-level programming in assembly
   - Interrupt handling (keyboard + VSync)
   - Memory-mapped I/O
@@ -17,7 +17,7 @@ What This Project Demonstrates is:
   - Frame-based difficulty scaling
 
 
-How does the Retro Car Game work? <br>
+<h3>How does the Retro Car Game work?</h3> <br>
 The player controls a car that can move left and right using the keyboard:
 
 - 4 → Move left
