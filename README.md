@@ -14,7 +14,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
   - Sprite-based graphics <br>
   - Collision detection <br>
   - Basic game loop architecture <br>
-  - Frame-based difficulty scaling <br>
+  - Frame-based difficulty scaling 
 
 <br>
 <br>
