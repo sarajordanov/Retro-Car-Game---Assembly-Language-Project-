@@ -17,15 +17,17 @@ What This Project Demonstrates is:
 
 How does the Retro Car Game work?
 The player controls a car that can move left and right using the keyboard:
-4 → Move left
 
-6 → Move right
+- 4 → Move left
+
+- 6 → Move right
+
 
 The objective is to avoid obstacles and stay on the road. The game ends if:
 
-The car collides with an obstacle
+- The car collides with an obstacle
 
-The car moves off the road (pavement collision)
+- The car moves off the road (pavement collision)
 
 As the game progresses, the obstacle speed increases, making it more challenging over time.
 
