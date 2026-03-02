@@ -5,16 +5,16 @@ This project was developed as part of my Systems 1 course in the first year of C
 For this project, I built a small retro-style car game entirely in assembly language. 
 <br>
 <br>
-<br>
-<h3>What This Project Demonstrates is: </h3> <br>
-  - low-level programming in assembly
-  - Interrupt handling (keyboard + VSync)
-  - Memory-mapped I/O
-  - VRAM manipulation
-  - Sprite-based graphics
-  - Collision detection
-  - Basic game loop architecture
-  - Frame-based difficulty scaling
+
+<h3>What This Project Demonstrates is: </h3> 
+  - low-level programming in assembly <br>
+  - Interrupt handling (keyboard + VSync) <br>
+  - Memory-mapped I/O <br>
+  - VRAM manipulation <br>
+  - Sprite-based graphics <br>
+  - Collision detection <br>
+  - Basic game loop architecture <br>
+  - Frame-based difficulty scaling <br>
 
 <br>
 <br>
