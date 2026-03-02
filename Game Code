@@ -1,0 +1,888 @@
+; -----------------------------------------------------------------------------
+; Assembly RETRO FAST CAR
+; -----------------------------------------------------------------------------
+JMP main
+JMP isr
+
+vsync:     DW 0  ; Indicates the VSync event.
+keypress:  DW 0  ; Indicates a keypress event.
+last_key:  DW 0  ; Stores the key code from IN 6
+
+game_over: DW 0  ; 1 = Game Over, 0 = Normal gameplay
+    
+car_position:   DW 0  ; Initial position of the car.
+view_position: 	DW 0  ; Track the vertical scroll position of the screen
+
+
+obstacle_speed: DW 0   ; Initial obstacle speed.   
+frame_counter:  DW 0   ; Counts frames to increase speed periodically.
+
+; Initial position of the obstacle.
+obstacle1_pos: DW 0
+obstacle2_pos: DW 0
+obstacle3_pos: DW 0
+obstacle4_pos: DW 0
+obstacle5_pos: DW 0
+
+
+; A string that is displayed while the game is loading to start.
+string_start:
+    DB "START ENGINE.."
+    DB 0
+ 
+; A string that is displayed when the car crashed into the obstacles or the pavement(off-road).    
+game_over_str:
+    DB "ENGINE KAPUT:("
+    DB 0 
+
+; -----------------------------------------------------------------------------
+; Interrupt Service Routine
+; -----------------------------------------------------------------------------
+; The ISR to serve the graphics card interrupt requests .
+; Triggered on keypress and VSync events. The routine sets the global flags
+; vysnc and keypress and returns immediately. The set flags are then detected
+; and processed by the main game loop.
+; -----------------------------------------------------------------------------
+isr:
+    PUSH A            ; Do not lose the value of register A.
+    IN 1              ; Which interrupt event occured?
+    CMP A, 4          ; Was it VSync?
+    JNE isr_keyboard  ; If not, it had to be the keyboard.
+    MOV [vsync], 1    ; If yes, set the VSync flag.
+		              ; Tells the game when the screen is ready to draw (for smooth animation).	
+    MOV A, 4          ; VSync interrupt number.
+    OUT 2             ; The VSync interrupt has been serviced.
+    JMP isr_return
+
+isr_keyboard:
+    IN 5              ; Read the key event status.
+    AND A, 1          ; Check the keydown bit, if key was pressed
+    CMP A, 1
+    JNE isr_key_clear
+
+    MOV [keypress], 1 ; Set the keypress flag.
+    IN 6              ; Get the key code.
+    MOV [last_key], A ; Store it in memory for use later.
+    JMP isr_keyboard_serviced
+
+isr_key_clear:
+    IN 6              ; Just read to clear the key state.
+
+isr_keyboard_serviced:
+    MOV A, 1
+    OUT 2             ; Signal keyboard interrupt serviced.
+    JMP isr_return    ; The keyboard interrupt has been serviced.
+
+isr_return:
+    POP A             ; Restore the original value of register A.  
+    
+    IRET
+
+; -----------------------------------------------------------------------------
+; Graphic tile definitions
+; -----------------------------------------------------------------------------
+; These are the 64x64 monochrome bitmaps that we use to replace some of the
+; inbuilt ASCII characters with. These newly defined characters serve as
+; our basic graphic elements to construct the car, the obstacles, etc.
+; -----------------------------------------------------------------------------
+tile_definitions:
+; Black Outline of the car
+  DB "\x00\x00\x00\x00\x3F\xFC\x21\x84\x20\x04\x60\x06\x6E\x76\xFF\xFF"
+  DB "\x80\x01\x80\x01\x80\x01\x80\x01\x80\x01\xFF\xFF\x3C\x3C\x00\x00"
+
+; Red Lights
+  DB "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+  DB "\x70\x0E\x70\x0E\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
+; The Car 
+  DB "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+  DB "\x0F\xF0\x0F\xF0\x7F\xFE\x7F\xFE\x7F\xFE\x00\x00\x00\x00\x00\x00"
+
+; -----------------------------------------------------------------------------
+; Function: load_vram_tiles()
+; -----------------------------------------------------------------------------
+; Loads all our custom graphic tiles to VRAM.
+;  _______________________________________
+; | Base address for character set: 0x8000 |
+;  ----------------------------------------
+; Definitions of text characters start at address 0x8000 in VRAM. We choose to
+; redefine ASCII characters 0xF0 - 0xF2, which start at VRAM address 0x9E00.
+; 
+;   _________________________
+;  | base = 0x8000            |
+;  | ASCII_code = 0xF0 = 240  |
+;  | tile_size = 32 bytes     |
+;   -------------------------
+;  VRAM_address = 0x8000 + 240 × 32
+;               = 0x8000 + 0x1E00
+;               = 0x9E00
+;
+;  We have 3 tiles and want to store them in VRAM starting at a specific 
+;  ASCII code (say 0xF0). Each tile = 32 bytes. So for 3 tiles:
+;  3 × 32 = 96 bytes = 0x0060
+;  If we start at ASCII code 0xF0, we calculate the base VRAM address:
+;   ____________________________________________________________________
+;  | Base VRAM address = 0x8000 + (0xF0 × 32) = 0x8000 + 0x1E00 = 0x9E00 |
+;   ---------------------------------------------------------------------
+;
+; -----------------------------------------------------------------------------
+load_vram_tiles:
+    MOV C, tile_definitions   ; Load the address of the tile data into register C.
+							  		
+    MOV D, 0x9E00 ; The custom tiles start at the VRAM address 0x9E00 for character 0xF0.
+                  
+; The code will repeatedly copy tile data here until all tiles are loaded.
+load_vram_tiles_loop: 
+    CMP D, 0x9E60 	  ; Checks if finished with copying all tiles, the custom tiles end at the VRAM address 0x9E60.
+		          
+    
+    JE load_vram_tiles_return ; If the VRAM address in D equals the end address go return.
+    
+    MOV A, D      ; Set the VRAM address
+    OUT 8         ; through the VIDADDR I/O register.
+    MOV A, [C]    ; Load a 16-bit word of the data.
+    OUT 9         ; Store it to VRAM.
+    ADD C, 2      ; Points to your tile data in memory (RAM).
+		  ; Moves pointer in RAM to the next 2 bytes of tile data (16-bit)
+    ADD D, 2      ; Points to the VRAM address where the tile should go.
+	          ; Moves pointer in VRAM to the next VRAM word (16-bit space).
+    JMP load_vram_tiles_loop
+
+load_vram_tiles_return:
+    
+    RET
+
+
+; --------------------------------------------------------------------
+; Function: draw_text(*str, color, *vram)
+; --------------------------------------------------------------------
+; Draws the given text to the given VRAM address.
+; *str  -> register C: The pointer to a string in RAM.
+; color -> register B: The color of the text (0 - 255).
+; *vram -> register D: The address in VRAM to place the text to.
+; --------------------------------------------------------------------
+draw_text:
+    MOVB BH, [C]         ; Get character from string.
+    CMPB BH, 0           ; End of string?
+    JE draw_text_return
+
+    MOV A, D             ; Set VRAM address.
+    OUT 8
+    MOV A, B             ; Set color + character,
+			 ; B contains both the color and the character.
+                        
+    OUT 9
+
+    ADD D, 2             ; Next character on same row.
+				              
+    INC C                ; Move pointer C to the next character in the string.
+    JMP draw_text
+
+draw_text_return:
+    
+    RET
+
+; ---------------------------------------------------------------------------------
+; Functions: 
+; draw_starting_screen() 
+; draw_game_over_screen()
+; ---------------------------------------------------------------------------------
+; Constructs the screen that displays the "Start engine.." and "Engine kaput.." 
+; message. The screen is contained just below the 128x16 tiles map area, far left.
+; ---------------------------------------------------------------------------------
+draw_starting_screen:
+    MOV C, string_start    ; "Start engine.."
+    MOV B, 188             ; Color (greenish yellow) 
+    MOV D, 0x1802          ; VRAM position for string.
+    CALL draw_text
+
+    RET
+
+draw_game_over_screen:
+    MOV C, game_over_str    ; "Engine kaput:("
+    MOV B, 224              ; Color (red)
+    MOV D, 0x1802           ; VRAM position for string.
+    CALL draw_text
+
+    RET
+    
+; ---------------------------------------------------------------------------------
+; Function: show_starting_screen()
+; ---------------------------------------------------------------------------------
+; Sets the video view to the "Start engine..." screen. It also sets the background
+; color to black.
+; ---------------------------------------------------------------------------------
+show_starting_screen:
+    ; This effectively makes the view jump to a different part of VRAM where your start screen graphics are stored.	
+    MOV A, 0xA304      ; Access the VRAM Vertical Scroll value
+    OUT 8              ; through the VIDADDR I/O register.
+    MOV A, 256         ; Scrolls the screen down vertically by 16 tiles (16 × 16 = 256 pixels)
+    OUT 9              ; by setting the Vertical Scroll value to 256.
+    
+    MOV A, 0xA300      ; Access the VRAM Background value
+    OUT 8              ; through the VIDADDR I/O register.
+    MOV A, 0x0000      ; Set it to black
+    OUT 9              ; by setting the Background value to 0.
+    
+    RET
+
+
+; This function creates a small delay, often useful after loading or transitioning a screen.
+wait_before_start:
+    MOV B, 0x1010      ; it is used as a counter to create a delay by wasting CPU cycles.
+
+wait_loop:    
+    DEC B              ; Decrement B. 
+    CMP B, 0           ; Compare B to 0, whether the counter reached zero.
+    JNE wait_loop      ; If not zero, keep looping/counting.
+    
+    RET                ; Otherwise return.
+
+
+; --------------------------------------------------------------------------------
+; Function: show_game_over_screen()
+; --------------------------------------------------------------------------------
+; Sets the video view to the "Engine kaput..." screen. It also sets the background
+; color to black.
+; --------------------------------------------------------------------------------
+show_game_over_screen:
+    MOV A, 0xA304      ; Access the VRAM Vertical Scroll value
+    OUT 8              ; through the VIDADDR I/O register.
+    MOV A, 256         ; Scroll vertically 16 tiles
+    OUT 9              ; by setting the Vertical Scroll value to 256.
+    MOV A, 0xA300      ; Access the VRAM Background value
+    OUT 8              ; through the VIDADDR I/O register.
+    MOV A, 0x0000      ; Set it to black
+    OUT 9              ; by setting the Background value to 0.
+    
+    RET
+
+
+; This function clears the car and ring sprites from the screen 
+; Erasing them by writing empty values into their video memory slots.
+clear_sprites:
+    ; Clear Car Sprites (sprites 1 to 3)
+    MOV D, 0xA306       ; Start of sprite 1 tile/color for the car.
+		        
+    MOV C, 3            ; We have 3 car sprites to clear.
+
+clear_car_loop:
+    CMP C, 0
+    JE clear_obstacles  ; If we’ve cleared all 3, jump to next section.
+
+    MOV A, D
+    OUT 8
+    MOV A, 0x0000       ; Empty tile and transparent color.
+    OUT 9               ; Write a blank tile + transparent color.
+    ADD D, 4            ; Move to next sprite slot, each sprite uses 4 bytes.
+    DEC C               
+    JMP clear_car_loop
+
+clear_obstacles:
+    ; Clear 5 obstacle sprites (positions and tiles).
+    MOV C, 5            ; We'll clear 5 obstacle sprites.
+    MOV D, 0xA312       ; Starting sprite tile/color of Obstacle 1.
+clear_obstacle_loop:
+    CMP C, 0
+    JE clear_done       ; If done with all 5 obstacles, jump to exit.
+    MOV A, D
+    OUT 8
+    MOV A, 0x0000       ; Erase the obstacle’s tile/color (set to transparent).
+    OUT 9
+    ADD D, 2            ; One moves from tile/color -> position.
+    MOV A, D
+    OUT 8
+    MOV A, 0x0000       ; Erase its position by writing 0 to the position field.
+    OUT 9
+    ADD D, 2            ; Go to next obstacle’s sprite.
+			; The next moves from position -> the next ring sprite's tile/color.
+    DEC C
+    JMP clear_obstacle_loop
+
+clear_done:
+
+    RET
+
+
+; -----------------------------------------------------------------------------
+; Function: game_init()
+; -----------------------------------------------------------------------------
+; Initializes all global variables to their defaults 
+; -----------------------------------------------------------------------------
+game_init:
+    CALL game_restart    ; Initialize variables through game restart.
+	  
+
+; -----------------------------------------------------------------------------
+; Function: game_restart()
+; -----------------------------------------------------------------------------
+; Places the car, obstacle and other to its initial position 
+; -----------------------------------------------------------------------------  
+game_restart:
+	MOV [car_position], 0x74BE ; Y = 116, X = 190
+	MOV [obstacle_speed], 2    ; This determines how many pixels they move per frame.
+	
+
+	MOV [obstacle1_pos], 0x90F8  ;0xYYXX
+    MOV [obstacle2_pos], 0x50FD
+    MOV [obstacle3_pos], 0x7030
+    MOV [obstacle4_pos], 0x8570
+    MOV [obstacle5_pos], 0x5099
+
+    RET
+  
+; -----------------------------------------------------------------------------
+; Function: draw_map()
+; -----------------------------------------------------------------------------
+; The function draws the pavements/grass(the off-road) placing 
+; characters/tiles on the appropriate positions.
+; -----------------------------------------------------------------------------
+draw_map:
+    MOV D, 0x0000       ; Start writing to VRAM address 0x0000 (top-left corner).
+    MOV C, 32           ; Number of vertical rows (height).
+
+draw_map_pavement_left:
+    CMP C, 0
+    JE draw_map_right   ; If C == 0 (all rows drawn), jump to draw the right side.
+
+    MOV B, 5            ; Draw 4 tiles across (columns 0 to 3).
+
+
+draw_map_row_left:
+    CMP B, 0
+    JE draw_map_next_row_left ; If all 4 columns in this row are drawn, go to the next row.
+
+
+    MOV A, D
+    OUT 8
+    MOV A, 0xDB5D         ; Character code(0xDB) and color code (0x5D)
+    OUT 9
+
+    ADD D, 2              ; Move to the next tile (each tile is 2 bytes)
+    DEC B                 ; One less tile to draw in this row.
+    JMP draw_map_row_left ; Repeat until 4 tiles drawn.
+
+draw_map_next_row_left:
+    SUB D, 10             ; Moved 5×2 = 8 bytes rightward.
+		          ; Moves D to the start of the next row (back 4 tiles, then down a row).
+    
+    ADD D, 0x80           ; Move 128 bytes down one row
+                          ; Each row of tiles takes up 0x80 (128) bytes in VRAM.
+                          ; So adding 0x80 to the address moves to the start 
+                          ; of the next row vertically.
+    DEC C
+    JMP draw_map_pavement_left
+
+
+; Draw right side block
+draw_map_right:
+    MOV D, 0x0016        ; VRAM address = 22 decimal = starts at column 11
+    MOV C, 32             
+
+draw_map_pavement_right:
+    CMP C, 0
+    JE draw_map_return
+
+    MOV B, 5             
+
+draw_map_row_right:
+    CMP B, 0
+    JE draw_map_next_row_right
+
+    MOV A, D
+    OUT 8
+    MOV A, 0xDB5D
+    OUT 9
+
+    ADD D, 2
+    DEC B
+    JMP draw_map_row_right
+
+draw_map_next_row_right:
+    SUB D, 10
+    ADD D, 0x80
+    DEC C
+    JMP draw_map_pavement_right
+
+draw_map_return:
+
+    RET
+
+; -----------------------------------------------------------------------------
+; Function: map_screen()
+; -----------------------------------------------------------------------------
+; Set vertical scroll and set the background color to the color of the road.
+; -----------------------------------------------------------------------------
+map_screen:
+    MOV [view_position], 0 ; The locally stored Vertical Scroll value.
+    MOV A, 0xA304          ; Access the VRAM Verical Scroll value
+    OUT 8                  ; through the VIDADDR I/O register.
+    MOV A, 0               ; Set Verical Scroll to 0
+    OUT 9                  ; through the VIDDATA I/O register.
+
+    MOV A, 0xA300          ; Access the VRAM Background value
+    OUT 8                  ; through the VIDADDR I/O register.
+    MOV A, 0x00B6          ; We choose color 182 as the color of the road,
+    OUT 9                  ; so we set the Background value to 0xB6.
+    
+    RET
+
+; -----------------------------------------------------------------------------
+; Function: draw_car()
+; -----------------------------------------------------------------------------
+; Draws the car on the screen at position determined by the global
+; car_position variable. This is done by setting up all three sprites
+; that compose the car.
+;
+; B = pointer to your sprite definitions (color and tile).
+; D = current VRAM address where we’ll write sprite data.
+; C = sprite counter.
+; 
+; -----------------------------------------------------------------------------
+draw_car:
+    MOV B, draw_car_colors  ; The pointer to a sprite information.
+    MOV D, 0xA306           ; The VRAM address of sprite 1.
+    MOV C, 3                ; Set up sprites 1 - 3.
+			    ; 4 bytes per sprite.
+draw_car_sprite:
+    CMP C, 0                ; Have we finished with all 3 sprites?
+    JE draw_car_return
+    MOV A, D                ; VRAM address of the tile and color values.
+    OUT 8                   ; Access them through the VIDADDR I/O register.
+    MOV A, [B]              ; Update the tile (BH) and color (BL) values
+    OUT 9                   ; through the VIDDATA I/O register.
+    
+                            ; 'OUT 8' tells the system where in VRAM we want to write.
+                            ; 'OUT 9' writes the tile and color for this sprite.
+    
+    
+    ADD D, 2                ; Move to the position information,
+    MOV A, D                ; which is encoded with the succeeding 2 bytes
+    OUT 8                   ; in the VRAM.
+    MOV A, [car_position]   ; Get the position from the global variable.
+    OUT 9                   ; Both are set through the VIDDATA I/O register.
+    
+    ADD B, 2                ; Point to the information of the next sprite.
+    ADD D, 2                ; Set up the VRAM address of the next sprite.
+    
+    DEC C                   ; One sprite done, do the next.
+    JMP draw_car_sprite
+
+draw_car_return:
+    
+    RET
+    
+; A constant array that defines the three tiles and colors of the car.
+; High byte = tile index (F0, F1, etc.)
+; Low byte = color code
+draw_car_colors:
+    DW 0xF000   ; outline     - black
+    DW 0xF1E0   ; red lights  - red
+    DW 0xF21F   ; car body    - blue
+
+
+; ----------------------------------------------------------------------------- 
+; Function: draw_obstacles()
+; ----------------------------------------------------------------------------- 
+draw_obstacles:
+    ; --- Obstacle 1 ---
+    MOV A, 0xA312	  ; activating memory cell
+    OUT 8
+    MOV A, 0xAFFC         ; 0xAF = 175(character), 0xCC = 204(color-yellow)
+    OUT 9
+
+    MOV A , 0xA314 
+    OUT 8 
+    MOV A, [obstacle1_pos]  
+    OUT 9
+
+    ; --- Obstacle 2 ---
+    MOV A, 0xA316
+    OUT 8
+    MOV A, 0xAFFC         ; 0xAF = 175(character), 0xCC = 204(color-yellow)
+    OUT 9
+
+    MOV A, 0xA318
+    OUT 8
+    MOV A, [obstacle2_pos]
+    OUT 9
+
+    ; --- Obstacle 3 ---
+    MOV A, 0xA31A
+    OUT 8
+    MOV A, 0xB2E0         ; 0xB2 = 178(character), 0xE0 = 224(color-red)
+    OUT 9
+
+    MOV A, 0xA31C
+    OUT 8
+    MOV A, [obstacle3_pos]
+    OUT 9
+
+
+    ; --- Obstacle 4 ---
+    MOV A, 0xA31E
+    OUT 8
+    MOV A, 0xAFFC         ; 0xAF = 175(character), 0xCC = 204(color-yellow)
+    OUT 9
+
+    OUT 9
+    MOV A, 0xA320
+    OUT 8
+    MOV A, [obstacle4_pos]
+    OUT 9
+
+
+
+    ; --- Obstacle 5 ---
+    MOV A, 0xA322 
+    OUT 8
+    MOV A, 0xAFFC         ; 0xAF = 175(character), 0xCC = 204(color-yellow)
+    OUT 9
+
+    OUT 9
+    MOV A, 0xA324   
+    OUT 8
+    MOV A, [obstacle5_pos]
+    OUT 9
+    
+    RET
+
+
+update_obstacle_loc:
+    MOV B, [obstacle_speed]  ; Loads the current speed of obstacles (from memory) into B.
+                             ; All five obstacles move at the same speed.
+
+    ; --- Move Obstacle 1 ---
+    MOV A,  0xA314	     ; Address of the sprite’s Y-position (how far down it is)
+    OUT 8
+    IN 9                     ; Get the current position of the obstacle sprite
+    MOV A, [obstacle1_pos]   ; [obstacle1_pos] is like a variable in RAM that tracks where the obstacle is vertically.
+
+    ADD A, B                 ; Add the speed, is used to move each obstacle by its speed value.
+    MOV [obstacle1_pos], A   ; Save the new position
+
+    ; --- Move Obstacle 2 ---
+    MOV A, 0xA318
+    OUT 8
+    IN 9
+    MOV A, [obstacle2_pos]
+
+    ADD A, B
+    MOV [obstacle2_pos], A
+
+    ; --- Move Obstacle 3 ---
+    MOV A, 0xA31C
+    OUT 8
+    IN 9
+    MOV A, [obstacle3_pos]
+
+    ADD A, B
+    MOV [obstacle3_pos], A
+
+    ; --- Move Obstacle 4 ---
+    MOV A, 0xA320
+    OUT 8
+    IN 9
+    MOV A, [obstacle4_pos]
+
+    ADD A, B
+    MOV [obstacle4_pos], A
+
+
+    ; --- Move Obstacle 5 ---
+    MOV A, 0xA324
+    OUT 8
+    IN 9
+    MOV A, [obstacle5_pos]
+
+    ADD A, B
+    MOV [obstacle5_pos], A
+
+
+    
+    CMP A, 0x80FF 	; Checking if the obstacle has moved too far down the screen
+    JNE update_obstacle_return     
+    
+    CALL reset          ; if it has, it resets its position.        
+
+update_obstacle_return:
+    
+    RET
+
+reset:
+    MOV A, 0xA314
+    OUT 8
+    MOV A, 0x90F8
+    OUT 9
+    MOV [obstacle1_pos], A
+
+
+    MOV A, 0xA318
+    OUT 8
+    MOV A, 0x50FD
+    OUT 9
+    MOV [obstacle2_pos], A
+
+    MOV A, 0xA31C
+    OUT 8
+    MOV A, 0x7030
+    OUT 9
+    MOV [obstacle3_pos], A
+ 
+    MOV A, 0xA320
+    OUT 8
+    MOV A, 0x8570
+    OUT 9
+    MOV [obstacle4_pos], A
+
+    MOV A, 0xA322
+    OUT 8
+    MOV A, 0x5099
+    OUT 9
+    MOV [obstacle5_pos], A
+
+    RET
+ 
+
+update_car_position:
+    ; Check if a key was pressed
+    MOV A, [keypress]
+    CMP A, 0
+    JE update_done  ; If no key is pressed (keypress == 0), exit early
+
+    ; Clear keypress and check which key
+    MOV [keypress], 0    ; Reset the keypress flag so we don't process it again.
+    MOV A, [last_key]    ; stores the keycode
+
+    ; Check which direction
+    CMP A, 0x34          ; '4' key = left
+    JE move_left
+    CMP A, 0x36          ; '6' key = right
+    JE move_right
+
+JMP update_done
+
+move_left:
+    MOV A, [car_position]   ; get current position
+    MOV B, A
+
+    SHR A, 8                ; Shift right 8 bits, isolate X in A (high byte)
+
+    SUB A, 20               ; Move left by 20 pixels
+
+    SHL A, 8                ; Shift back to high byte position
+    AND B, 0x00FF           ; Clear high byte, keep Y (low byte)
+    OR A, B                 ; Combine new X with old Y
+
+    MOV [car_position], A   ; Save new position
+    JMP update_done
+
+
+move_right:
+    MOV A, [car_position]
+    MOV B, A
+
+    SHR A, 8                ; Get X (high byte)
+
+    ADD A, 20               ; Move right by 20 pixels
+
+    SHL A, 8                ; Put X back to high byte
+    AND B, 0x00FF           ; Clear high byte, keep Y
+    OR A, B
+
+    MOV [car_position], A
+    JMP update_done
+
+
+update_done:
+    
+    RET
+
+
+; Checks if the car has hit the pavement boundaries or gone off-road
+check_pavement_collision:
+    MOV A, [car_position]  ; Load the current car position
+    SHR A, 8              
+    CMP A, 60              ; left boundary (end of left pavement).
+    JB off_road              
+
+    CMP A, 170             ; right boundary (start of right pavement).
+    JA off_road          
+
+    RET
+
+off_road:
+    MOV A, 1
+    MOV [game_over], A      ; Set the game_over flag to 1 (true).
+    CLI                     ; Disable interrupts to effectively stop gameplay (no more player input or updates).
+
+
+    CALL clear_sprites ; Call a function to clear all sprites from the screen.
+
+    ; Call functions to show the game over string
+    CALL show_game_over_screen
+    CALL draw_game_over_screen          
+
+halt_loop:
+
+    JMP halt_loop      ; Loop forever to freeze the game on the Game Over screen.
+
+                 
+
+; ------------------------------------------------------
+; Function: check_obstacle_collision()
+; ------------------------------------------------------
+; Checks if car collides with any obstacle.
+; ------------------------------------------------------
+check_obstacle_collision:
+    MOV B, [car_position]     ; Load car position once into B
+
+    MOV C, [obstacle1_pos]
+    CALL check_hit
+
+    MOV C, [obstacle2_pos]
+    CALL check_hit
+
+    MOV C, [obstacle3_pos]
+    CALL check_hit
+
+    MOV C, [obstacle4_pos]
+    CALL check_hit
+
+    MOV C, [obstacle5_pos]
+    CALL check_hit
+
+    RET
+
+; -------------------------------------------------
+; Inputs:
+;   B = car_pos (high byte = Y, low byte = X)
+;   C = obstacle_pos (high byte = Y, low byte = X)
+; Uses: A, D
+; -------------------------------------------------
+; Check if the car is touching or very close to any obstacle, using their X and Y positions.
+; It compares the X and Y distances. If both are less than 10 pixels, it considers it a hit.
+check_hit:
+    ; Extract low bytes (X position) of both car and obstacle, then compute A = obs_x - car_x.
+    MOV A, C
+    AND A, 0x00FF     ; isolate obstacle_x
+    MOV D, B
+    AND D, 0x00FF     ; isolate car_x
+    SUB A, D          ; to find the distance between the car and the obstacle along the X-axis.
+    JNB .x_abs_done   ; if the result is not negative
+    MOV D, 0          ; if it is negative, it flips it (gets absolute value)
+    SUB D, A
+    MOV A, D
+.x_abs_done:
+    CMP A, 10
+    JAE .no_hit       ; If X distance >= 10 -> too far apart, no collision. Skip.
+
+    ; Extract Y values (high bytes) from car and obstacle, subtract to get Y delta.
+    MOV A, C
+    SHR A, 8          ; obstacle_y
+    MOV D, B
+    SHR D, 8          ; car_y
+    SUB A, D
+    JNB .y_abs_done
+    MOV D, 0
+    SUB D, A
+    MOV A, D
+.y_abs_done:
+    CMP A, 10
+    JAE .no_hit       ; If Y distance >= 10 -> too far apart, no collision. Skip.
+
+
+    CALL handle_collision    ; A collision has occurred -> call the game-over handler.
+
+.no_hit:
+
+    RET
+
+handle_collision:
+    MOV A, 1
+    MOV [game_over], A 
+    CLI                      ; Disable interrupts (stop gameplay)
+
+   
+    CALL clear_sprites
+		
+    CALL show_game_over_screen
+    CALL draw_game_over_screen          
+
+halt_loop2:
+
+    JMP halt_loop2           
+
+
+; -----------------------------------------------------------------------------
+; Function: wait_next_frame()
+; -----------------------------------------------------------------------------
+; Waits for the VSync signal.
+; -----------------------------------------------------------------------------
+wait_next_frame:
+    MOV A, [vsync]          ; Check the current vsync value.
+    CMP A, 0                ; If still 0,
+    JE wait_next_frame      ; check it again.
+    MOV [vsync], 0          ; The vsync signal received . Reset it.
+    
+    RET
+
+
+main:
+    ; Initialize the stack pointer.
+    MOV SP, 0x0FDF
+
+    ; Enable the graphic card in TEXT mode.
+    MOV A, 1
+    OUT 7
+
+    CALL show_starting_screen 
+    CALL draw_starting_screen
+    CALL wait_before_start 
+
+    ; Initialize the graphic elements.
+    CALL load_vram_tiles
+    CALL game_init       
+    CALL draw_map
+    
+    CALL map_screen
+	
+    ; Enable keypress (1) and VSync (4) interrupts.
+    MOV A, 5
+    OUT 0
+    
+    ;enable interrupt
+    STI
+      
+; Enter the game loop.
+game_loop: 
+        CALL draw_car
+        CALL update_car_position
+        CALL draw_obstacles
+        CALL update_obstacle_loc
+        CALL check_pavement_collision
+        CALL check_obstacle_collision
+        CALL wait_next_frame
+       
+        ; This part controls the difficulty by increasing obstacle speed
+        MOV A, [frame_counter]  ; Keeps track of how many frames have passed.
+        ADD A, 1                ; Add 1 because a new frame just ran
+        MOV [frame_counter], A  ; Store the updated frame count back
+
+        
+        ; Only after 500 frames (10 seconds) do we increase speed.    
+        CMP A, 250  ; If we haven't reached 500 frames, skip the speed increase.            		
+        JNE skip_speed_increase
+
+
+        MOV [frame_counter], 0 	; Reset the frame counter to start timing again
+        MOV A, [obstacle_speed] ; Get current obstacle speed
+        CMP A, 10               ; max 10
+        JAE skip_speed_increase ; If already max speed, skip
+
+        ADD A, 1                ; Increase speed by 1
+        MOV [obstacle_speed], A ; Store the new faster speed
+
+skip_speed_increase:	; Go back to the top and repeat the loop -> next frame starts.
+				
+	    JMP game_loop            ; Do the next frame.
