@@ -62,7 +62,6 @@ As the game progresses, the obstacle speed increases, making it more challenging
 
 <br>
 <br>
-<br>
 This project allowed me to apply core Systems 1 concepts in a practical and meaningful way. <br>
 I worked with stack initialization and register preservation inside interrupt service routines, managed interrupt control using CLI/STI, and used bitwise operations such as SHR, SHL, AND, and OR to manipulate packed position values. 
 <br>
