@@ -79,7 +79,8 @@ I also communicated directly with hardware through memory-mapped I/O and IN/OUT 
 <br>
 Through building this game entirely in assembly, I gained a deep understanding of how graphics are constructed from raw memory, how hardware interrupts function internally, how a game loop operates at the lowest level, and how timing and synchronization affect smooth animation. 
 
+<br>
+<br>
 
-
-# 🏎️Video of the Retro Car Game🏎️
+# 🏎️Preview video of the Retro Car Game🏎️
 https://github.com/user-attachments/assets/0ded17e7-f40a-45e2-b726-caebe3f049a3
