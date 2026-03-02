@@ -7,19 +7,20 @@ For this project, I built a small retro-style car game entirely in assembly lang
 <br>
 
 <h3>What This Project Demonstrates is: </h3> 
-  - low-level programming in assembly <br>
   
-  - Interrupt handling (keyboard + VSync) <br>
+  - low-level programming in assembly 
   
-  - Memory-mapped I/O <br>
+  - Interrupt handling (keyboard + VSync) 
   
-  - VRAM manipulation <br>
+  - Memory-mapped I/O 
   
-  - Sprite-based graphics <br>
+  - VRAM manipulation 
   
-  - Collision detection <br>
+  - Sprite-based graphics 
   
-  - Basic game loop architecture <br>
+  - Collision detection 
+  
+  - Basic game loop architecture 
   
   - Frame-based difficulty scaling 
 
