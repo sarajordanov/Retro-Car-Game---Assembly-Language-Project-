@@ -4,7 +4,7 @@ This project was developed as part of my Systems 1 course in the first year of C
 
 For this project, I built a small retro-style car game entirely in assembly language.
 
-What This Project Demonstrates is 
+What This Project Demonstrates is:
   - low-level programming in assembly
   - Interrupt handling (keyboard + VSync)
   - Memory-mapped I/O
@@ -31,8 +31,8 @@ Technical Highlights
 **Interrupt Service Routine (ISR)**
 The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and update the screen smoothly, creating stable animation and responsive controls.
 
-**Custom Graphics (VRAM Tiles)
-**Instead of using built-in characters, I created custom 64×64 pixel graphics and loaded them directly into video memory (VRAM). These custom tiles are used to build the car, obstacles, and road elements.
+**Custom Graphics (VRAM Tiles)**
+Instead of using built-in characters, I created custom 64×64 pixel graphics and loaded them directly into video memory (VRAM). These custom tiles are used to build the car, obstacles, and road elements.
 
 **Sprite System**
 The car is built from three separate sprites:
