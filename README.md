@@ -33,7 +33,6 @@ The player controls a car that can move left and right using the keyboard:
 
 - 6 → Move right
 
-<br>
 
 The objective is to avoid obstacles and stay on the road. The game ends if:
 
