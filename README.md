@@ -4,6 +4,8 @@ This project was developed as part of my Systems 1 course in the first year of C
 
 For this project, I built a small retro-style car game entirely in assembly language. 
 <br>
+<br>
+<br>
 What This Project Demonstrates is:
   - low-level programming in assembly
   - Interrupt handling (keyboard + VSync)
