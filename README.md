@@ -68,7 +68,7 @@ As the game progresses, the obstacle speed increases, making it more challenging
 
 - **Increasing Difficulty Over Time**<br>
   The game tracks how many frames have passed. After a certain amount of time, the obstacles move faster. This gradually makes the game more challenging, up to a    maximum speed.
-
+  
 <br>
 <br>
 This project allowed me to apply core Systems 1 concepts in a practical and meaningful way. <br>
