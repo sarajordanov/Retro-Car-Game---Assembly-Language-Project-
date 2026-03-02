@@ -6,7 +6,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
 <br>
 <br>
 <br>
-What This Project Demonstrates is: <br>
+What This Project Demonstrates is: 
   - low-level programming in assembly
   - Interrupt handling (keyboard + VSync)
   - Memory-mapped I/O
