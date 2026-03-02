@@ -36,7 +36,8 @@ As the game progresses, the obstacle speed increases, making it more challenging
 <br>
 
 
-<h3>Technical Highlights</h3>
+<h3>Technical Highlights</h3> <br>
+
 - **Interrupt Service Routine (ISR)** <br>
   The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and         update the screen smoothly, creating stable animation and responsive controls.
 
