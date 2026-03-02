@@ -17,7 +17,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
   - Frame-based difficulty scaling
 
 
-<h3>How does the Retro Car Game work?</h3> <br>
+<h3>How does the Retro Car Game work?</h3> 
 The player controls a car that can move left and right using the keyboard:
 
 - 4 → Move left
