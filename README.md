@@ -43,7 +43,7 @@ The objective is to avoid obstacles and stay on the road. The game ends if:
 
 As the game progresses, the obstacle speed increases, making it more challenging over time.
 <br>
-
+<br>
 
 
 #### Technical Highlights
