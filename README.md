@@ -6,7 +6,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
 <br>
 <br>
 
-### What This Project Demonstrates is: 
+#### What This Project Demonstrates is: 
   
   - low-level programming in assembly 
   
@@ -28,7 +28,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
 
 
 
-### How does the Retro Car Game work? 
+#### How does the Retro Car Game work? 
 The player controls a car that can move left and right using the keyboard:
 
 - 4 → Move left
@@ -48,7 +48,7 @@ As the game progresses, the obstacle speed increases, making it more challenging
 <br>
 
 
-### Technical Highlights
+#### Technical Highlights
 
 - **Interrupt Service Routine (ISR)** <br>
   The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and         update the screen smoothly, creating stable animation and responsive controls.
@@ -72,14 +72,8 @@ As the game progresses, the obstacle speed increases, making it more challenging
   
 <br>
 <br>
-This project allowed me to apply core Systems 1 concepts in a practical and meaningful way. <br>
-I worked with stack initialization and register preservation inside interrupt service routines, managed interrupt control using CLI/STI, and used bitwise operations such as SHR, SHL, AND, and OR to manipulate packed position values. 
-<br>
-<br>
-I also communicated directly with hardware through memory-mapped I/O and IN/OUT instructions, while manually managing memory and VRAM without any abstractions.
-<br>
-<br>
-Through building this game entirely in assembly, I gained a deep understanding of how graphics are constructed from raw memory, how hardware interrupts function internally, how a game loop operates at the lowest level, and how timing and synchronization affect smooth animation. 
+I worked with stack initialization and register preservation inside interrupt service routines, managed interrupt control using CLI/STI, and used bitwise operations such as SHR, SHL, AND, and OR to manipulate packed position values. I also communicated directly with hardware through memory-mapped I/O and IN/OUT instructions, while manually managing memory and VRAM without any abstractions.
+
 
 <br>
 <br>
