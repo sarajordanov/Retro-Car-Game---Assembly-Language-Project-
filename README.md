@@ -24,7 +24,6 @@ For this project, I built a small retro-style car game entirely in assembly lang
   
   - Frame-based difficulty scaling 
 <br>
-<br>
 
 
 
@@ -44,8 +43,7 @@ The objective is to avoid obstacles and stay on the road. The game ends if:
 
 As the game progresses, the obstacle speed increases, making it more challenging over time.
 <br>
-<br>
-<br>
+
 
 
 #### Technical Highlights
