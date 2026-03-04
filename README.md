@@ -1,4 +1,4 @@
-# 🏎️Retro Car Game (Assembly Language Project)
+# Retro Car Game (Assembly Language Project)
 
 This project was developed as part of my Systems 1 course in the first year of Computer Science. The goal of the course was to understand computer architecture, low-level programming, interrupts, memory-mapped I/O, and how hardware interacts with software.
 
@@ -6,7 +6,7 @@ For this project, I built a small retro-style car game entirely in assembly lang
 <br>
 <br>
 
-<h3>What This Project Demonstrates is: </h3> 
+### What This Project Demonstrates is: 
   
   - low-level programming in assembly 
   
@@ -25,8 +25,8 @@ For this project, I built a small retro-style car game entirely in assembly lang
   - Frame-based difficulty scaling 
 
 
-<br>
-<h3>How does the Retro Car Game work?</h3> 
+
+### How does the Retro Car Game work? 
 The player controls a car that can move left and right using the keyboard:
 
 - 4 → Move left
@@ -46,7 +46,7 @@ As the game progresses, the obstacle speed increases, making it more challenging
 <br>
 
 
-<h3>Technical Highlights</h3> 
+### Technical Highlights
 
 - **Interrupt Service Routine (ISR)** <br>
   The game uses hardware interrupts to detect keyboard input and screen refresh events (VSync). This allows the game to respond instantly to key presses and         update the screen smoothly, creating stable animation and responsive controls.
@@ -82,5 +82,5 @@ Through building this game entirely in assembly, I gained a deep understanding o
 <br>
 <br>
 
-# 🏎️Preview video of the Retro Car Game🏎️
+## Preview video of the Retro Car Game
 https://github.com/user-attachments/assets/0ded17e7-f40a-45e2-b726-caebe3f049a3
