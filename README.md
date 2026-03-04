@@ -23,6 +23,8 @@ For this project, I built a small retro-style car game entirely in assembly lang
   - Basic game loop architecture 
   
   - Frame-based difficulty scaling 
+<br>
+<br>
 
 
 
